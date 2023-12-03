@@ -24,12 +24,12 @@ This Archive Cracker Tool is a Python-based graphical user interface application
 
 ### Files
 
-- `archive_cracker.py`: Main Python script for the Archive Cracker Tool.
-- `icon.ico`: Icon file for the application (ensure this is in the same directory as `archive_cracker.py`).
+- `main.py`: Main Python script for the Archive Cracker Tool.
+- `icon.ico`: Icon file for the application (ensure this is in the same directory as `main.py`).
 
 ## Usage
 
-1. Run `archive_cracker.py`.
+1. Run `main.py`.
 2. Use the "Browse" buttons to select the archive file you want to crack and the dictionary file (a plain text file with one password per line).
 3. Click "Start Attack" to begin the dictionary attack.
 4. If the password is not found in the dictionary, you will be prompted to start a brute-force attack.
