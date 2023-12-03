@@ -4,6 +4,9 @@
 
 This Archive Cracker Tool is a Python-based graphical user interface application that performs dictionary attacks on ZIP, RAR, and 7z files. It's designed for educational purposes to demonstrate how a basic dictionary attack works. The user can select an archive file and a dictionary file (a text file with potential passwords) through the interface. The tool will attempt to find the correct password for the file and also supports a brute-force attack if the password is not found in the dictionary.
 
+</p>
+<img src="https://github.com/Radianek/Archive-Cracker-Tool/blob/main/GUI.png">
+<p>
 ## Setup
 
 ### Requirements
