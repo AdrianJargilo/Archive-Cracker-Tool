@@ -72,6 +72,8 @@ def update_password_display(password):
 root = tk.Tk()
 root.title("Archive Cracker")
 root.configure(bg='#f0f0f0')
+root.iconbitmap('icon.ico')
+
 style = {'font': ('Helvetica', 12), 'bg': '#f0f0f0'}
 
 tk.Label(root, text="Archive File:", **style).grid(row=1, column=0, padx=10, pady=10)
