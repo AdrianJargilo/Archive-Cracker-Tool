@@ -1,57 +1,63 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import threading
 import zipfile
 import rarfile
 import py7zr
-import threading
 import itertools
 
-def crack_archive(archive_file_path, dictionary_file_path):
+def try_password(file_path, password):
+    try:
+        if file_path.endswith('.zip'):
+            with zipfile.ZipFile(file_path, 'r') as archive:
+                archive.extractall(pwd=bytes(password, 'utf-8'))
+        elif file_path.endswith('.rar'):
+            with rarfile.RarFile(file_path, 'r') as archive:
+                archive.extractall(pwd=password)
+        elif file_path.endswith('.7z'):
+            with py7zr.SevenZipFile(file_path, 'r', password=password) as archive:
+                archive.extractall()
+        return True
+    except Exception:
+        return False
+
+def crack_archive(archive_file_path, dictionary_file_path, stop_event):
     def run_dictionary_attack():
         try:
             with open(dictionary_file_path, 'r') as dict_file:
                 for line in dict_file:
+                    if stop_event.is_set():
+                        update_password_display("Search stopped.")
+                        return
                     password = line.strip()
                     update_password_display(f"Trying: {password}")
                     if try_password(archive_file_path, password):
                         update_password_display(f"Password found: {password}")
                         return
-            response = messagebox.askyesno("Password Not Found", "Password not found in dictionary. Do you want to start a brute-force attack?")
-            if response:
-                run_brute_force_attack()
-            else:
-                update_password_display("Password not found.")
+            if not stop_event.is_set():
+                response = messagebox.askyesno("Password Not Found", "Password not found in dictionary. Do you want to start a brute-force attack?")
+                if response:
+                    run_brute_force_attack()
+                else:
+                    update_password_display("Password not found.")
         except Exception as e:
             messagebox.showerror("Error", str(e))
             update_password_display("Error")
 
     def run_brute_force_attack():
-        alphabet = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ1234567890"
-        for length in range(1, 6):
+        alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        for length in range(1, 6):  # Adjust max length as needed
             for password in itertools.product(alphabet, repeat=length):
+                if stop_event.is_set():
+                    update_password_display("Brute-force stopped.")
+                    return
                 password = ''.join(password)
                 update_password_display(f"Trying: {password}")
                 if try_password(archive_file_path, password):
                     update_password_display(f"Password found: {password}")
                     return
-        update_password_display("Password not found.")
-
-    def try_password(file_path, password):
-        try:
-            if file_path.endswith('.zip'):
-                with zipfile.ZipFile(file_path, 'r') as archive:
-                    archive.extractall(pwd=bytes(password, 'utf-8'))
-            elif file_path.endswith('.rar'):
-                with rarfile.RarFile(file_path, 'r') as archive:
-                    archive.extractall(pwd=password)
-            elif file_path.endswith('.7z'):
-                with py7zr.SevenZipFile(file_path, 'r', password=password) as archive:
-                    archive.extractall()
-            return True
-        except (zipfile.BadZipFile, rarfile.BadRarFile, py7zr.Bad7zFile):
-            return False
-        except Exception as e:
-            return False
+        if not stop_event.is_set():
+            update_password_display("Password not found in brute-force attack.")
 
     attack_thread = threading.Thread(target=run_dictionary_attack)
     attack_thread.start()
@@ -65,6 +71,17 @@ def select_dict():
     path = filedialog.askopenfilename()
     dict_entry.delete(0, tk.END)
     dict_entry.insert(0, path)
+
+def start_attack():
+    global attack_thread, stop_event
+    if start_button["text"] == "Start Attack":
+        stop_event.clear()
+        attack_thread = crack_archive(archive_entry.get(), dict_entry.get(), stop_event)
+        start_button.config(text="Stop", bg="#f44336")
+    else:
+        stop_event.set()
+        start_button.config(text="Start Attack", bg="#4CAF50")
+        password_label.config(text="Stopping...")
 
 def update_password_display(password):
     password_label.config(text=password)
@@ -87,7 +104,11 @@ dict_entry.grid(row=2, column=1, padx=10, pady=10)
 
 tk.Button(root, text="Browse", command=select_archive).grid(row=1, column=2, padx=10, pady=10)
 tk.Button(root, text="Browse", command=select_dict).grid(row=2, column=2, padx=10, pady=10)
-tk.Button(root, text="Start Attack", command=lambda: crack_archive(archive_entry.get(), dict_entry.get()), bg='#4CAF50', fg='white').grid(row=3, column=1, padx=10, pady=10)
+
+stop_event = threading.Event()
+attack_thread = None
+start_button = tk.Button(root, text="Start Attack", command=start_attack, bg='#4CAF50', fg='white')
+start_button.grid(row=3, column=1, padx=10, pady=10)
 
 password_label = tk.Label(root, text="", **style)
 password_label.grid(row=4, column=0, columnspan=3, padx=10, pady=10)
