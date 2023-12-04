@@ -7,6 +7,8 @@ import py7zr
 import itertools
 
 def try_password(file_path, password):
+    # Tries to open the archive with the given password.
+    # Returns True if the password is correct, False otherwise.
     try:
         if file_path.endswith('.zip'):
             with zipfile.ZipFile(file_path, 'r') as archive:
@@ -23,6 +25,7 @@ def try_password(file_path, password):
 
 def crack_archive(archive_file_path, dictionary_file_path, stop_event):
     def run_dictionary_attack():
+        # Dictionary attack: tries each password from the dictionary file.
         try:
             with open(dictionary_file_path, 'r') as dict_file:
                 for line in dict_file:
@@ -35,6 +38,7 @@ def crack_archive(archive_file_path, dictionary_file_path, stop_event):
                         update_password_display(f"Password found: {password}")
                         return
             if not stop_event.is_set():
+                # If password is not found in dictionary, ask user to start brute-force attack.
                 response = messagebox.askyesno("Password Not Found", "Password not found in dictionary. Do you want to start a brute-force attack?")
                 if response:
                     run_brute_force_attack()
@@ -45,8 +49,9 @@ def crack_archive(archive_file_path, dictionary_file_path, stop_event):
             update_password_display("Error")
 
     def run_brute_force_attack():
+        # Brute-force attack: tries combinations of characters up to a certain length.
         alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        for length in range(1, 6):  # Adjust max length as needed
+        for length in range(1, 6):  # Limit of password length for brute-force
             for password in itertools.product(alphabet, repeat=length):
                 if stop_event.is_set():
                     update_password_display("Brute-force stopped.")
@@ -73,13 +78,14 @@ def select_dict():
     dict_entry.insert(0, path)
 
 def start_attack():
+    # Starts or stops the attack based on the current state of the start button.
     global attack_thread, stop_event
     if start_button["text"] == "Start Attack":
         stop_event.clear()
         attack_thread = crack_archive(archive_entry.get(), dict_entry.get(), stop_event)
         start_button.config(text="Stop", bg="#f44336")
     else:
-        stop_event.set()
+        stop_event.set() # Signals the attack thread to stop
         start_button.config(text="Start Attack", bg="#4CAF50")
         password_label.config(text="Stopping...")
 
