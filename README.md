@@ -7,7 +7,6 @@ This Archive Cracker Tool is a Python-based graphical user interface application
 </p>
 <img src="https://github.com/Radianek/Archive-Cracker-Tool/blob/main/GUI.png">
 <p>
-## Setup
 
 ### Requirements
 
